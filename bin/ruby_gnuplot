@@ -70,13 +70,17 @@ end
 
 PlotData = Struct.new(:x, :y, :delta_y)
 
-def parse_plot_data(data_to_show=nil)
+def parse_plot_data(data_to_show=nil, instance_number_as_x=false)
   lines = {}
   for_every_ssv_entry do |line_name, ssv_entry|
     next unless data_to_show.nil? || data_to_show.include?(line_name)
     lines[line_name] ||= []
 
-    lines[line_name] << PlotData.new(*ssv_entry)
+    lines[line_name] << if instance_number_as_x
+      PlotData.new(lines[line_name].length + 1, *ssv_entry)
+    else
+      PlotData.new(*ssv_entry)
+    end
 
     lines[line_name].last.delta_y ||= 0
   end
@@ -354,10 +358,18 @@ OptionParser.new do |opts|
   ) do |d|
     options[:data_to_show] = d
   end
+
+  options[:instance_number_as_x] = false
+  opts.on(
+    "--instance-number-as-x",
+    "Use the data instance number as the horizontal coordinate"
+  ) do |x|
+    options[:instance_number_as_x] = x unless x.nil?
+  end
 end.parse!
 
 plot(
-  parse_plot_data(options[:data_to_show]),
+  parse_plot_data(options[:data_to_show], options[:instance_number_as_x]),
   options[:output_file],
   options[:horizontal_axis_label],
   options[:vertical_axis_label],
