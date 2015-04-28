@@ -176,7 +176,8 @@ def plot(
   display_type,
   with_smooth_line,
   logscale_x,
-  logscale_y
+  logscale_y,
+  set_statements
 )
   Gnuplot.open do |gp|
     Gnuplot::Plot.new(gp) do |plot|
@@ -205,6 +206,10 @@ def plot(
         elsif logscale_y
           plot.set 'logscale y'
         end
+      end
+
+      set_statements.each do |s|
+        plot.set s
       end
 
       style = DEFAULT_STYLE
@@ -366,6 +371,15 @@ OptionParser.new do |opts|
   ) do |x|
     options[:instance_number_as_x] = x unless x.nil?
   end
+
+  options[:set_statements] = []
+  opts.on(
+    "--set s1,s2,s3",
+    csv_splitter,
+    "Gnuplot set statements. For example, 'xrange [1:3]'."
+  ) do |s|
+    options[:set_statements] = s
+  end
 end.parse!
 
 plot(
@@ -381,5 +395,6 @@ plot(
   options[:display_type],
   options[:with_smooth_line],
   options[:logscale_x],
-  options[:logscale_y]
+  options[:logscale_y],
+  options[:set_statements]
 )
