@@ -26,10 +26,8 @@ module IntegerRefinement
         return 'D'
       when 14
         return 'E'
-      when 15
-        return 'F'
       else
-        if self > 15
+        if self >= 15
           return 'F'
         else
           return to_s
@@ -42,8 +40,8 @@ end
 using IntegerRefinement
 
 def random_color
-  @r ||= Random.new(111)
-  "rgb \"##{@r.rand(13).round.abs.to_hex}#{@r.rand(13).round.abs.to_hex}#{@r.rand(13).round.abs.to_hex}#{@r.rand(13).round.abs.to_hex}#{@r.rand(13).round.abs.to_hex}#{@r.rand(13).round.abs.to_hex}\""
+  @r ||= Random.new(2287401391)
+  "rgb \"##{@r.rand(13).round.abs.to_hex}#{@r.rand(15).round.abs.to_hex}#{@r.rand(13).round.abs.to_hex}#{@r.rand(15).round.abs.to_hex}#{@r.rand(13).round.abs.to_hex}#{@r.rand(15).round.abs.to_hex}\""
 end
 
 def for_every_line_of_input
@@ -96,12 +94,12 @@ DATA_TYPE_OPTIONS = [
   CATEGORICAL_DATA_TYPE
 ]
 
-DEFAULT_OUTPUT_FILE_NAME = "plot.eps"
+DEFAULT_OUTPUT_FILE_NAME = "plot.pdf"
 DEFAULT_HORIZONTAL_AXIS_LABEL = 'x'
 DEFAULT_VERTICAL_AXIS_LABEL = 'y'
 DEFAULT_TITLE = ""
 DEFAULT_KEY_POSITION = "right top"
-DEFAULT_TERMINAL = "postscript eps enhanced color"
+DEFAULT_TERMINAL = "pdf size 20cm,15cm"
 DEFAULT_STYLE = 1
 DEFAULT_WIDTH = 2
 DEFAULT_DISPLAY_TYPE = "errorbars"
@@ -163,6 +161,14 @@ def add_line_to_plot(name, data, plot, style, data_type, width, display_type, wi
   plot
 end
 
+def open_gnuplot(file)
+  if file
+    File.open(file, "w") { |gp| yield gp }
+  else
+    Gnuplot.open { |gp| yield gp }
+  end
+end
+
 def plot(
   lines,
   output_file_name,
@@ -177,9 +183,10 @@ def plot(
   with_smooth_line,
   logscale_x,
   logscale_y,
-  set_statements
+  set_statements,
+  file
 )
-  Gnuplot.open do |gp|
+  open_gnuplot(file) do |gp|
     Gnuplot::Plot.new(gp) do |plot|
       plot.term term
       plot.output output_file_name
@@ -380,6 +387,15 @@ OptionParser.new do |opts|
   ) do |s|
     options[:set_statements] = s
   end
+
+  options[:file] = nil
+  opts.on(
+    "-f",
+    "--file [gnuplot script name]",
+    "Save generated gnuplot script to a file."
+  ) do |x|
+    options[:file] = x unless x.nil?
+  end
 end.parse!
 
 plot(
@@ -396,5 +412,6 @@ plot(
   options[:with_smooth_line],
   options[:logscale_x],
   options[:logscale_y],
-  options[:set_statements]
+  options[:set_statements],
+  options[:file]
 )
